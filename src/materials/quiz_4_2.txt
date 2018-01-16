@@ -1,0 +1,76 @@
+Understanding Output
+
+It's possible to suggest a wide variety of behaviors by specifying only a few quantities.
+
+For example by specifying only a target lane, a target vehicle (to follow), a target speed,
+and a time to reach these targets, we can make suggestions as nuanced as 
+
+"stay in your lane but get behind that vehicle in the right lane so
+that you can pass it when the gap gets big enough."
+
+Look at the picture below and 5 potential json representations of
+output and see if you can match the json representation with the
+corresponding verbal suggestion.
+
+
+
+Output A
+{
+    "target_lane_id" : 2,
+    "target_leading_vehicle_id": 3,
+    "target_speed" : null,
+    "seconds_to_reach_target" : null,
+}
+Output B
+{
+    "target_lane_id" : 3,
+    "target_leading_vehicle_id": null,
+    "target_speed" : 20.0,
+    "seconds_to_reach_target" : 5.0,
+}
+Output C
+{
+    "target_lane_id" : 2,
+    "target_leading_vehicle_id": null,
+    "target_speed" : 15.0,
+    "seconds_to_reach_target" : 10.0,
+}
+Output D
+{
+    "target_lane_id" : 2,
+    "target_leading_vehicle_id": 2,
+    "target_speed" : null,
+    "seconds_to_reach_target" : 5.0,
+}
+Output E
+{
+    "target_lane_id" : 1,
+    "target_leading_vehicle_id": 2,
+    "target_speed" : null,
+    "seconds_to_reach_target" : 5.0,
+}
+
+QUIZ QUESTION
+Match the verbal description of each behavior to the corresponding json representation.
+
+Submit to check your answer choices!
+
+VERBAL DESCRIPTION
+JSON OUTPUT
+
+"Just stay in your lane and keep following the car in front of you"
+A
+
+"Let's pass this car! Get in the left lane and follow that car"
+E
+
+"Let's pass this car! But first we have to match speeds with the car in the left lane. 
+Stay in this lane but get behind that car in the left lane and match their speed."
+D
+
+"Whoa! This car we've been following is going too fast. 
+Stop trying to follow it and just try to go the speed limit."
+C
+
+"Get in the right lane soon."
+B
