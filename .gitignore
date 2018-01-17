@@ -1,1 +1,7 @@
 data/
+build/
+cmakepatch.txt
+install-mac.sh
+install-ubuntu.sh
+uWebSockets/
+src/main-sample.cpp

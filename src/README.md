@@ -1,4 +1,23 @@
 
+# Getting Started
+
+
+Great! With just a couple of lines of code we were able to get the car to drive forward at constant velocity.
+
+Notice, however, that the car went from 0 MPH to 56 MPH in a single 20 ms frame, causing a spike in acceleration.
+
+Acceleration is calculated by comparing the rate of change of average speed over .2 second intervals. In this case total acceleration at one point was as high as 75 m/s^2. Jerk was also very high. The jerk is calculated as the average acceleration over 1 second intervals. In order for the passenger to have an enjoyable ride both the jerk and the total acceleration should not exceed 10 m/s^2.
+
+Part of the total acceleration is the normal component, AccN which measures the centripetal acceleration from turning. The tighter and faster a turn is made, the higher the AccN value will be.
+
+In our simple test we were not turning at all, so the value of AccN was zero.
+
+Going forward, consider how to minimize total acceleration and jerk by gradually increasing and decreasing point path spacing based on the car_speed variable.
+
+To get a better idea of how movement affects the acceleration of the car, click the Manual Mode check box in the top left of the simulator screen to drive the car around yourself.
+
+
+
 # TODO
 
 # spline.h
