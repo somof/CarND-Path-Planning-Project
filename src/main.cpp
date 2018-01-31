@@ -216,11 +216,11 @@ int main() {
               (uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                uWS::OpCode opCode) {
 
-    const double MIN_SPEED = 25.0; // 49.5
-    const double MAX_SPEED = 100; //100.0; // 49.5
-    const double MAX_ACCEL = 7.224; // .224;
-    const double SAFETY_RANGE_FRONT = 20; // 30
-    const double SAFETY_RANGE_REAR = 1; // 30
+    const double MIN_SPEED = 20.0; // 49.5
+    const double MAX_SPEED = 50; //100.0; // 49.5
+    const double MAX_ACCEL = 0.224; // .224;
+    const double SAFETY_RANGE_FRONT = 30; // 30
+    const double SAFETY_RANGE_REAR = 30; // 30
 
 #endif
     // "42" at the start of the message means there's a websocket message event.
