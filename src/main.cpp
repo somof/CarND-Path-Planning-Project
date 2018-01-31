@@ -217,7 +217,7 @@ int main() {
                uWS::OpCode opCode) {
 
     const double MIN_SPEED = 20.0; // 49.5
-    const double MAX_SPEED = 50; //100.0; // 49.5
+    const double MAX_SPEED = 49.5; //100.0; // 49.5
     const double MAX_ACCEL = 0.224; // .224;
     const double SAFETY_RANGE_FRONT = 30; // 30
     const double SAFETY_RANGE_REAR = 30; // 30
