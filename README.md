@@ -12,11 +12,11 @@ Self-Driving Car Engineer Nanodegree Program
 
 # Compile and run the path_planning
 
-My Path Planning works with the following process on the repository root.
-
+My Path-Planning works with the following process on the repository root.
 
 ```
-	$ cd ./build;
+	$ mkdir build
+	$ cd ./build
     $ cmake ..
 -- The C compiler identification is GNU 5.4.0
 -- The CXX compiler identification is GNU 5.4.0
@@ -35,13 +35,13 @@ My Path Planning works with the following process on the repository root.
 -- Configuring done
 -- Generating done
 -- Build files have been written to: (snip) /CarND-Path-Planning-Project/build
-    $ make;
+    $ make
+[ 50%] Linking CXX executable path_planning
+[100%] Built target path_planning
     $ ./path_planning
 Listening to port 4567
 
 ```
-
-
 
 # Rubric Points
 
@@ -51,40 +51,28 @@ Listening to port 4567
 
 No changes needs in the CMakeLists.txt to build the binary correctly for the project.
 
-
 ## Valid Trajectories
 
 ### The car is able to drive at least 4.32 miles without incident..
 
-  - The top right screen of the simulator shows the current/best miles
-    driven without incident. Incidents include exceeding
-    acceleration/jerk/speed, collision, and driving outside of the
-    lanes. Each incident case is also listed below in more detail.
-
-
-The path_planning worked for at least 5 miles without incidents.
+The path_planning works for more 5 miles without incidents.
 
 ![5 miles](5miles.png)
 
 ![15 miles](15miles.png)
 
-
 ### The car drives according to the speed limit.
 
-  - The car doesn't drive faster than the speed limit. Also the car
-    isn't driving much slower than speed limit unless obstructed by
-    traffic.
-
-
-Speed limit ??
-
-
-
+Tha car drives as fast as it can do without collisions, and never exceeds the limit speed 50mph.
 
 ### Max Acceleration and Jerk are not Exceeded.
 
   - The car does not exceed a total acceleration of 10 m/s^2 and a
     jerk of 10 m/s^3.
+
+Tha car drives 
+
+as fast as it can do without collisions, and never exceeds the limit speed 50mph.
 
 
 Max acceleration and jerk never exceeded the limits while the first 10 miles.

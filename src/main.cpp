@@ -216,11 +216,14 @@ int main() {
               (uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                uWS::OpCode opCode) {
 
-    const double MIN_SPEED = 20.0; // 49.5
-    const double MAX_SPEED = 49.5; //100.0; // 49.5
-    const double MAX_ACCEL = 0.224; // .224;
-    const double SAFETY_RANGE_FRONT = 30; // 30
-    const double SAFETY_RANGE_REAR = 30; // 30
+    const double MAX_ACCEL = 0.224;
+    const double MIN_SPEED = MAX_ACCEL * 5;
+    const double MAX_SPEED = 49.5;
+    const double SAFETY_RANGE_FRONT = 10;
+    const double SAFETY_RANGE_REAR = 10;
+    const double SAFETY_TIME_RANGE0 = 1.5; // sec
+    const double SAFETY_TIME_RANGE1 = 1.5; // sec
+    const double SAFETY_TIME_RANGE2 = 2.0; // sec
 
 #endif
     // "42" at the start of the message means there's a websocket message event.
@@ -283,6 +286,9 @@ int main() {
                 bool vacant_right1 = (lane <= 1 ? true : false);
                 bool vacant_right2 = (lane == 0 ? true : false);
 
+                bool vacant_left_time  = 100.;
+                bool vacant_right_time = 100.;
+
                 for ( int i = 0; i < sensor_fusion.size(); i++ ) {
                    // data format for each car is: [id, x, y, vx, vy, s, d]. 
                    double s = sensor_fusion[i][5];
@@ -296,22 +302,65 @@ int main() {
                       continue;
                    }
                    bool ahead = (car_s < s ? true : false);
-                   bool vicinity = (((s > car_s && s - car_s < SAFETY_RANGE_FRONT) ||
-                                     (s < car_s && car_s - s < SAFETY_RANGE_REAR)) ? true : false);
 
-                   if (car_lane == lane && ahead && vicinity) {
+                   double vx = sensor_fusion[i][3];
+                   double vy = sensor_fusion[i][4];
+                   double speed = sqrt(vx*vx + vy*vy);
+                   // correct exact car position with lapse from previous trajectory.
+                   s += (double)prev_size * 0.02 * speed;
+
+
+                   // time-base prediction
+                   if (.0 < speed) {
+                      double time_to_collision = std::abs(s - car_s) / speed;
+
+                      if (time_to_collision < SAFETY_TIME_RANGE0) {
+                         if (car_lane == lane && ahead) {
+                            vacant_ahead = false;
+                         }
+                      }
+
+                      if (time_to_collision < SAFETY_TIME_RANGE1) {
+                         if (car_lane == lane - 1) {
+                            vacant_left1 = false;
+                            if (vacant_left_time < time_to_collision)
+                               vacant_left_time = time_to_collision;
+                         }
+                         if (car_lane == lane + 1) {
+                            vacant_right1 = false;
+                            if (vacant_right_time < time_to_collision)
+                               vacant_right_time = time_to_collision;
+                         }
+                      }
+
+                      if (time_to_collision < SAFETY_TIME_RANGE2) {
+                         if (car_lane == lane - 2) {
+                            vacant_left2 = false;
+                         }
+                         if (car_lane == lane + 2) {
+                            vacant_right2 = false;
+                         }
+                      }
+                   }
+
+
+                   // distance-base prediction
+                   bool vicinity_s = (((s > car_s && s - car_s < SAFETY_RANGE_FRONT) ||
+                                       (s < car_s && car_s - s < SAFETY_RANGE_REAR)) ? true : false);
+
+                   if (car_lane == lane && ahead && vicinity_s) {
                       vacant_ahead = false;
                    }
-                   if (car_lane == lane - 1 && vicinity) {
+                   if (car_lane == lane - 1 && vicinity_s) {
                       vacant_left1 = false;
                    }
-                   if (car_lane == lane + 1 && vicinity) {
+                   if (car_lane == lane + 1 && vicinity_s) {
                       vacant_right1 = false;
                    }
-                   if (car_lane == lane - 2 && vicinity) {
+                   if (car_lane == lane - 2 && vicinity_s) {
                       vacant_left2 = false;
                    }
-                   if (car_lane == lane + 2 && vicinity) {
+                   if (car_lane == lane + 2 && vicinity_s) {
                       vacant_right2 = false;
                    }
                 }
@@ -323,23 +372,40 @@ int main() {
                 // Behavior
                 //
 
+                if (vacant_ahead) {
+                   // if no car ahead, speed up to MAX_SPEED
+                   if (ref_vel + MAX_ACCEL < MAX_SPEED) {
+                      ref_vel += MAX_ACCEL;
+                   }
 
-                if (!vacant_ahead) {
-                   if (vacant_left1) {
+                   // return to the center lane when the road is clear
+                   if (vacant_left1 && vacant_left2) {
+                      lane --;
+                   } else if (vacant_right1 && vacant_right2) {
+                      lane ++;
+                   }
+
+                } else {
+                   // 
+                   //std::cout << "a car ahead" << std::endl;
+                   if (vacant_left1 && vacant_right1) {
+                      // select side
+                      if (vacant_right_time < vacant_left_time) {
+                         lane --;
+                      } else {
+                         lane ++;
+                      }
+
+                   } else if (vacant_left1) {
+                      std::cout << "vacant_left" << std::endl;
                       lane --;
                    } else if (vacant_right1) {
+                      std::cout << "vacant_right" << std::endl;
                       lane ++;
-                   } else if (!vacant_left1 && vacant_left2) {
-                      lane -= 2;
-                   } else if (!vacant_right1 && vacant_right2) {
-                      lane += 2;
                    } else if (MIN_SPEED < ref_vel) {
                       // speed control when no lane to escape to
                       ref_vel -= MAX_ACCEL;
                    }
-
-                } else if (ref_vel + MAX_ACCEL < MAX_SPEED) {
-                   ref_vel += MAX_ACCEL;
                 }
 
 
@@ -347,7 +413,7 @@ int main() {
 
 
                 //
-                // Trajectory
+                // Trajectory from Q&A video
                 //
 
                 // (x, y) space waypoints
