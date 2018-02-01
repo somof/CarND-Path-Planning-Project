@@ -306,8 +306,6 @@ int main() {
                    double vx = sensor_fusion[i][3];
                    double vy = sensor_fusion[i][4];
                    double speed = sqrt(vx*vx + vy*vy);
-                   // correct exact car position with lapse from previous trajectory.
-                   s += (double)prev_size * 0.02 * speed;
 
 
                    // time-base prediction
@@ -343,6 +341,9 @@ int main() {
                       }
                    }
 
+
+                   // correct exact car position with lapse from previous trajectory.
+                   s += (double)prev_size * 0.02 * speed;
 
                    // distance-base prediction
                    bool vicinity_s = (((s > car_s && s - car_s < SAFETY_RANGE_FRONT) ||
