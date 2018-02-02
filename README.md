@@ -175,11 +175,10 @@ Following 5 parameters controls the Prediction algorithm.
 Large values for the parameters make the car to have long distance from other cars,
 and sequentially the cars rarely changes its lane.
 
-So these parameters should have large values for safety drive, 
-but it cause frequent traffic jam like that.
+These parameters should have large values for safety drive, 
+but it coincidently causes frequent traffic jam.
 
-
-The parameter values at my final code was decided as short as possible after some practical test.
+So the parameter values at my final code was decided as short as possible after some practical test.
 
 
 
