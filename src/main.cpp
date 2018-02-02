@@ -216,14 +216,14 @@ int main() {
               (uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                uWS::OpCode opCode) {
 
-    const double MIN_ACCEL = 0.005;
-    const double MAX_ACCEL = 0.25; //0.224;
+    const double MIN_ACCEL = 0.010;
+    const double MAX_ACCEL = 0.224;
     const double MIN_SPEED = MAX_ACCEL * 5;
     const double MAX_SPEED = 49.7;
     const double SAFETY_RANGE_FRONT = 10;
     const double SAFETY_RANGE_REAR = 10;
-    const double SAFETY_TIME_RANGE0 = 1.5; // sec
-    const double SAFETY_TIME_RANGE1 = 2.0; // sec
+    const double SAFETY_TIME_RANGE0 = 1.7; // sec
+    const double SAFETY_TIME_RANGE1 = 2.5; // sec
     const double SAFETY_TIME_RANGE2 = 3.0; // sec
 
 #endif
@@ -413,7 +413,7 @@ int main() {
 
                 if (vacant_ahead) {
                    // if no car ahead, speed up to MAX_SPEED
-                   double diff_speed = std::abs((MAX_SPEED - ref_vel) * 0.02);
+                   double diff_speed = (MAX_SPEED - ref_vel) * 0.02;
                    if (diff_speed < MIN_ACCEL) diff_speed = 0;
                    ref_vel += std::min(diff_speed, MAX_ACCEL);
 

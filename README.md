@@ -8,9 +8,8 @@ Self-Driving Car Engineer Nanodegree Program
 
 
 
-## report
 
-# Compile and run the path_planning
+## Compile and run the path_planning
 
 My Path-Planning works with the following process on the repository root.
 
@@ -43,86 +42,159 @@ Listening to port 4567
 
 ```
 
-# Rubric Points
+## Rubric Points
 
-## Compilation
+### Compilation
 
-### The code compiles correctly.
+#### The code compiles correctly.
 
 No changes needs in the CMakeLists.txt to build the binary correctly for the project.
 
-## Valid Trajectories
+### Valid Trajectories
 
-### The car is able to drive at least 4.32 miles without incident..
+#### The car is able to drive at least 4.32 miles without incident..
 
-The path_planning works for more 5 miles without incidents.
+The path_planning works for 5 more miles without incidents.
 
-![5 miles](5miles.png)
+![5 miles](img/5miles.png)
 
-![15 miles](15miles.png)
+![15 miles](img/15miles.png)
 
-### The car drives according to the speed limit.
+#### The car drives according to the speed limit.
 
 Tha car drives as fast as it can do without collisions, and never exceeds the limit speed 50mph.
 
-### Max Acceleration and Jerk are not Exceeded.
+#### Max Acceleration and Jerk are not Exceeded.
 
-  - The car does not exceed a total acceleration of 10 m/s^2 and a
-    jerk of 10 m/s^3.
+The car does not exceed a total acceleration of 10 m/s^2 and a jerk of 10 m/s^3.
 
-Tha car drives 
+#### Car does not have collisions.
 
-as fast as it can do without collisions, and never exceeds the limit speed 50mph.
+The car drives without collisions with any of the other cars on the road.
 
+#### The car stays in its lane, except for the time between changing lanes.
 
-Max acceleration and jerk never exceeded the limits while the first 10 miles.
+The car keeps to stay in its lane, 
+except for the time to change its lane at situations as below.
 
+#### The car is able to change lanes
 
+The car changes lanes when its preceding car is slow and an adjacent lane is clear.
 
-### Car does not have collisions.
+And plus, if all lanes is clear, the car move to the center lane.
 
-  - The car must not come into contact with any of the other cars on
-    the road.
+### Reflection
 
-### The car stays in its lane, except for the time between changing lanes.
+#### There is a reflection on how to generate paths.
 
-  - The car doesn't spend more than a 3 second length out side the
-    lane lanes during changing lanes, and every other time the car
-    stays inside one of the 3 lanes on the right hand side of the
-    road.
-
-### The car is able to change lanes
-
-  - The car is able to smoothly change lanes when it makes sense to do
-    so, such as when behind a slower moving car and an adjacent lane
-    is clear of other traffic.
-
-
-## Reflection
-
-### There is a reflection on how to generate paths.
-
-  - The code model for generating paths is described in detail. This
-    can be part of the README or a separate doc labeled "Model
-    Documentation".
+The generating path algorithm is described with my code as below.
 
 
 
+## Algorithm and Code Explanations
+
+My project is based on the one provided by Udacity,
+and my path planning algorithm is coded at [src/main.cpp line 270](./src/main.cpp#L270) .
+
+My algorithm consists of Prediction, Behavior and Trajectory part,
+and can be tuned with 9 parameters.
+
+
+### Prediction Part [line 279 to 406](./src/main.cpp#L279)
+
+This part infers vacant spaces around the car,
+and estimates "time to collision" if find adjacent cars running.
+
+The sensor fusion data are converted to the Frenet System from global map positions,
+assuming all the cars drive along the road with common-sense.
+And the position data are corrected to exact car positions with lapse from previous trajectory.
+
+Then the algorithm decides whether cars are running adjacent lanes from the car using 5 parameters.
+
+Though the road has 3 lanes, this algorithm assumes there are 5 lanes to simplify Behavior code.
+Here, No-existence of lane is dealed as same as No-Vacancy for the car.
+
+To infer vacant spaces,
+time-base prediction and distance-base prediction are applied to ensure the prediction results.
+
+Typically time-base prediction performs well,
+and distance-base prediction works to assist it in some cases
+that "time to collision" would have large error when relative-speed is near zero.
+
+
+### Behavior [line 410 to 460](./scr/main.cpp#L410)
+
+This part decides what to do next based on the result of the prediction.
+
+The algorithm is quite simple as velow.
+
+- if the car has vacancy ahead
+  - try to speed up till MAX_SPEED
+  - if all the lanes are clear, move to the center lane
+- else (no vacancy in front of the car)
+  - if both side lanes are free, move to the lane which "time to collision" is larger than the another
+  - else if left side lane is free, move to left lane
+  - else if right side lane is free, move to right lane
+  - else (no vacancy around the car), speed down to the speed of the preceding car
+
+Speed controls have hysteresis to avoid useless and deadly-frequent speed change.
+
+![lane chage](img/lanechage.png)
+![return to the center lane](img/return_to_center.png)
+
+
+### Trajectory [line 465 to 562](./scr/main.cpp#L465)
+
+The part make a trajectory for the car, based on the lesson codes from Udacity.
+
+This code use the latest 2 points and 3 new points produced
+by getXY() with a lane number to go that decided at Behavior part.
+
+Then the trajectories is filled up till 50 points using spline.h provided Udacity.
 
 
 
 
+### Parameters [line 218 to 228](./scr/main.cpp#L218)
+
+The algorithm can be tuned with 9 parameters.
+
+
+Following 4 parameters controls the speed of the car to fit in with the limitation of the challenge.
+
+``` 
+    const double MIN_ACCEL = 0.010;
+    const double MAX_ACCEL = 0.224;
+    const double MIN_SPEED = MAX_ACCEL * 5;
+    const double MAX_SPEED = 49.7;
+```
+
+Following 5 parameters controls the Prediction algorithm.
+
+```
+    const double SAFETY_RANGE_FRONT = 10;
+    const double SAFETY_RANGE_REAR = 10;
+    const double SAFETY_TIME_RANGE0 = 1.7; // sec
+    const double SAFETY_TIME_RANGE1 = 2.5; // sec
+    const double SAFETY_TIME_RANGE2 = 3.0; // sec
+```
+Large values for the parameters make the car to have long distance from other cars,
+and sequentially the cars rarely changes its lane.
+
+So these parameters should have large values for safety drive, 
+but it cause frequent trafic jam like that.
+
+![traffic jam](img/traffic_jam.png)
+
+The parameter values at my final code was deceided as short as possible after some practical test.
 
 
 
+Behavior and Trajectory part have no parameters to tune.
 
 
 
-
-
-
-
-
+## original README
 
 ### Simulator.
 You can download the Term3 Simulator which contains the Path Planning Project from the [releases tab (https://github.com/udacity/self-driving-car-sim/releases).
