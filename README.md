@@ -54,11 +54,9 @@ No changes needs in the CMakeLists.txt to build the binary correctly for the pro
 
 #### The car is able to drive at least 4.32 miles without incident..
 
-The path_planning works for 5 more miles without incidents.
+The path_planning works for 10 more miles without incidents.
 
-![5 miles](img/5miles.png)
-
-![15 miles](img/15miles.png)
+![10miles](img/10miles.png)
 
 #### The car drives according to the speed limit.
 
@@ -139,10 +137,6 @@ The algorithm is quite simple as velow.
 
 Speed controls have hysteresis to avoid useless and deadly-frequent speed change.
 
-![lane chage](img/lanechage.png)
-![return to the center lane](img/return_to_center.png)
-
-
 ### Trajectory [line 465 to 562](./scr/main.cpp#L465)
 
 The part make a trajectory for the car, based on the lesson codes from Udacity.
@@ -184,7 +178,6 @@ and sequentially the cars rarely changes its lane.
 So these parameters should have large values for safety drive, 
 but it cause frequent trafic jam like that.
 
-![traffic jam](img/traffic_jam.png)
 
 The parameter values at my final code was deceided as short as possible after some practical test.
 
