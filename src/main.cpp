@@ -209,21 +209,22 @@ int main() {
   // start in lane 1.
   int lane = 1;
 
-  // velocity to target
+  // target velocity
   double ref_vel = 0; //49.5; // mph
 
   h.onMessage([&ref_vel, &map_waypoints_x,&map_waypoints_y,&map_waypoints_s,&map_waypoints_dx,&map_waypoints_dy, &lane]
               (uWS::WebSocket<uWS::SERVER> ws, char *data, size_t length,
                uWS::OpCode opCode) {
 
-    const double MAX_ACCEL = 0.224;
+    const double MIN_ACCEL = 0.005;
+    const double MAX_ACCEL = 0.25; //0.224;
     const double MIN_SPEED = MAX_ACCEL * 5;
-    const double MAX_SPEED = 49.5;
+    const double MAX_SPEED = 49.7;
     const double SAFETY_RANGE_FRONT = 10;
     const double SAFETY_RANGE_REAR = 10;
     const double SAFETY_TIME_RANGE0 = 1.5; // sec
-    const double SAFETY_TIME_RANGE1 = 1.5; // sec
-    const double SAFETY_TIME_RANGE2 = 2.0; // sec
+    const double SAFETY_TIME_RANGE1 = 2.0; // sec
+    const double SAFETY_TIME_RANGE2 = 3.0; // sec
 
 #endif
     // "42" at the start of the message means there's a websocket message event.
@@ -286,8 +287,10 @@ int main() {
                 bool vacant_right1 = (lane <= 1 ? true : false);
                 bool vacant_right2 = (lane == 0 ? true : false);
 
-                bool vacant_left_time  = 100.;
-                bool vacant_right_time = 100.;
+                double ahead_car_speed  = ref_vel;
+                double vacant_ahead_time  = 100.;
+                double vacant_left_time  = 100.;
+                double vacant_right_time = 100.;
 
                 for ( int i = 0; i < sensor_fusion.size(); i++ ) {
                    // data format for each car is: [id, x, y, vx, vy, s, d]. 
@@ -303,47 +306,82 @@ int main() {
                    }
                    bool ahead = (car_s < s ? true : false);
 
+                   // car speed in global map
                    double vx = sensor_fusion[i][3];
                    double vy = sensor_fusion[i][4];
                    double speed = sqrt(vx*vx + vy*vy);
 
+                   // correct exact car position with lapse from previous trajectory.
+                   s += (double)prev_size * 0.02 * speed;
+
+                   double distance = s - car_s;
+                   if (std::abs(distance) <= 0.0000001) distance = 0.0000001; // prevent Zero division
+                   double relative_speed = speed - car_speed;
+
+                   // its estimation assumes all cars drive along the road
+                   // distance > 0 : the car is ahead
+                   // distance < 0 : the car is behind
+                   // relative_speed < 0: the car is slower
+                   // relative_speed > 0: the car is faster
+                   //
+                   // collision condition
+                   // distance > 0 and relative_speed < 0
+                   // distance < 0 and relative_speed > 0
+                   double time_to_collision = std::abs(distance / relative_speed);
+                   if ((distance > 0 && relative_speed > 0) ||
+                       (distance < 0 && relative_speed < 0)) {
+                      time_to_collision = SAFETY_TIME_RANGE2 + 10; // practically maximum value
+                   }
+
+
+#ifdef DEBUF_MSG
+                   if (car_lane == lane && -20 < distance && distance < 50) {
+                      std::cout << "sensor fusion: "
+                                << "id: " << i
+                                << "  lane: " << car_lane
+                                // << "  speed: " << car_speed
+                                // << "  speed: " << speed
+                                << "  distance: " << static_cast<int>(distance)
+                                << "  relative speed: " << static_cast<int>(relative_speed)
+                                << "  collision time: " << time_to_collision
+                                << "  s: " << s
+                                << "  d: " << d
+                                << std::endl;
+                   }
+#endif // DEBUF_MSG
 
                    // time-base prediction
-                   if (.0 < speed) {
-                      double time_to_collision = std::abs(s - car_s) / speed;
-
-                      if (time_to_collision < SAFETY_TIME_RANGE0) {
-                         if (car_lane == lane && ahead) {
-                            vacant_ahead = false;
-                         }
-                      }
-
-                      if (time_to_collision < SAFETY_TIME_RANGE1) {
-                         if (car_lane == lane - 1) {
-                            vacant_left1 = false;
-                            if (vacant_left_time < time_to_collision)
-                               vacant_left_time = time_to_collision;
-                         }
-                         if (car_lane == lane + 1) {
-                            vacant_right1 = false;
-                            if (vacant_right_time < time_to_collision)
-                               vacant_right_time = time_to_collision;
-                         }
-                      }
-
-                      if (time_to_collision < SAFETY_TIME_RANGE2) {
-                         if (car_lane == lane - 2) {
-                            vacant_left2 = false;
-                         }
-                         if (car_lane == lane + 2) {
-                            vacant_right2 = false;
+                   if (time_to_collision < SAFETY_TIME_RANGE0) {
+                      if (car_lane == lane && ahead) {
+                         vacant_ahead = false;
+                         if (time_to_collision < vacant_ahead_time) {
+                            vacant_ahead_time = time_to_collision;
+                            ahead_car_speed  = speed;
                          }
                       }
                    }
 
+                   if (time_to_collision < SAFETY_TIME_RANGE1) {
+                      if (car_lane == lane - 1) {
+                         vacant_left1 = false;
+                         if (time_to_collision < vacant_left_time)
+                            vacant_left_time = time_to_collision;
+                      }
+                      if (car_lane == lane + 1) {
+                         vacant_right1 = false;
+                         if (time_to_collision < vacant_right_time)
+                            vacant_right_time = time_to_collision;
+                      }
+                   }
 
-                   // correct exact car position with lapse from previous trajectory.
-                   s += (double)prev_size * 0.02 * speed;
+                   if (time_to_collision < SAFETY_TIME_RANGE2) {
+                      if (car_lane == lane - 2) {
+                         vacant_left2 = false;
+                      }
+                      if (car_lane == lane + 2) {
+                         vacant_right2 = false;
+                      }
+                   }
 
                    // distance-base prediction
                    bool vicinity_s = (((s > car_s && s - car_s < SAFETY_RANGE_FRONT) ||
@@ -375,38 +413,49 @@ int main() {
 
                 if (vacant_ahead) {
                    // if no car ahead, speed up to MAX_SPEED
-                   if (ref_vel + MAX_ACCEL < MAX_SPEED) {
-                      ref_vel += MAX_ACCEL;
-                   }
+                   double diff_speed = std::abs((MAX_SPEED - ref_vel) * 0.02);
+                   if (diff_speed < MIN_ACCEL) diff_speed = 0;
+                   ref_vel += std::min(diff_speed, MAX_ACCEL);
 
                    // return to the center lane when the road is clear
                    if (vacant_left1 && vacant_left2) {
+                      std::cout << "move to center lane :" << vacant_left_time << std::endl;
                       lane --;
                    } else if (vacant_right1 && vacant_right2) {
+                      std::cout << "move to center lane :" << vacant_right_time << std::endl;
                       lane ++;
                    }
 
                 } else {
                    // 
-                   //std::cout << "a car ahead" << std::endl;
+                   std::cout << "time to collision: " << vacant_ahead_time << " ";
                    if (vacant_left1 && vacant_right1) {
                       // select side
                       if (vacant_right_time < vacant_left_time) {
+                         std::cout << "-> left lane :" << vacant_left_time;
                          lane --;
                       } else {
+                         std::cout << "-> right lane: " << vacant_right_time;
                          lane ++;
                       }
 
                    } else if (vacant_left1) {
-                      std::cout << "vacant_left" << std::endl;
+                      std::cout << "-> left lane :" << vacant_left_time;
                       lane --;
                    } else if (vacant_right1) {
-                      std::cout << "vacant_right" << std::endl;
+                      std::cout << "-> right lane: " << vacant_right_time;
                       lane ++;
                    } else if (MIN_SPEED < ref_vel) {
                       // speed control when no lane to escape to
-                      ref_vel -= MAX_ACCEL;
+                      std::cout << "-> slow down";
+
+                      // Speed Cost
+                      double diff_speed = std::abs((ref_vel - ahead_car_speed) * 0.02);
+                      if (diff_speed < MIN_ACCEL) diff_speed = 0;
+                      ref_vel -= std::min(diff_speed, MAX_ACCEL);
                    }
+
+                   std::cout << std::endl;
                 }
 
 
