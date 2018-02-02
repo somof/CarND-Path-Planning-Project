@@ -60,7 +60,7 @@ The path_planning works for 10 more miles without incidents.
 
 #### The car drives according to the speed limit.
 
-Tha car drives as fast as it can do without collisions, and never exceeds the limit speed 50mph.
+The car drives as fast as it can do without collisions, and never exceeds the limit speed 50mph.
 
 #### Max Acceleration and Jerk are not Exceeded.
 
@@ -107,10 +107,10 @@ The sensor fusion data are converted to the Frenet System from global map positi
 assuming all the cars drive along the road with common-sense.
 And the position data are corrected to exact car positions with lapse from previous trajectory.
 
-Then the algorithm decides whether cars are running adjacent lanes from the car using 5 parameters.
+Then the algorithm decides whether other cars are running adjacent lanes of the car.
 
 Though the road has 3 lanes, this algorithm assumes there are 5 lanes to simplify Behavior code.
-Here, No-existence of lane is dealed as same as No-Vacancy for the car.
+Here, No-existence of lane is treated as same as No-Vacancy for the car.
 
 To infer vacant spaces,
 time-base prediction and distance-base prediction are applied to ensure the prediction results.
@@ -124,7 +124,7 @@ that "time to collision" would have large error when relative-speed is near zero
 
 This part decides what to do next based on the result of the prediction.
 
-The algorithm is quite simple as velow.
+The algorithm is quite simple as below.
 
 - if the car has vacancy ahead
   - try to speed up till MAX_SPEED
@@ -176,10 +176,10 @@ Large values for the parameters make the car to have long distance from other ca
 and sequentially the cars rarely changes its lane.
 
 So these parameters should have large values for safety drive, 
-but it cause frequent trafic jam like that.
+but it cause frequent traffic jam like that.
 
 
-The parameter values at my final code was deceided as short as possible after some practical test.
+The parameter values at my final code was decided as short as possible after some practical test.
 
 
 
